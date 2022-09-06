@@ -146,7 +146,9 @@ const checkDirExists = (dir, checkNDF = false, makeDir = false) => {
     }
     if (makeDir) {
         if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir);
+            fs.mkdirSync(dir, {
+                recursive: true,
+            });
         }
         return true;
     }
@@ -162,11 +164,16 @@ async function convertToPNG(path_, saveAs = '', fileName) {
 }
 
 async function convertToMP4(path_, saveAs = '', fileName) {
-    await fs.writeFileSync(path.resolve(saveAs, `${fileName}.mp4`), fs.readFileSync(path_, 'hex').slice(4), 'hex');
+    await fs.writeFileSync(path.resolve(saveAs, `${fileName}.mp4`), fs.readFileSync(path_).slice(2), 'binary');
 }
 
 async function checkType(path_) {
-    let type = await fs.readFileSync(path_, 'hex').slice(0, 8);
+    /**
+     * @type {Buffer}
+     */
+    const typeBuffer = await fs.readFileSync(path_);
+    if (!(typeBuffer instanceof Buffer)) return undefined;
+    const type = typeBuffer.slice(0, 4).toString('hex');
     if (type.includes('504e47')) return 'PNG';
     else if (type.includes('000000')) return 'MP4';
     else return undefined;
