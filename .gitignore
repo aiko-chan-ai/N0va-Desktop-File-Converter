@@ -125,6 +125,5 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
-file.exe
-test.mp4
-index.exe
+*.mp4
+*.exe
