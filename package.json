@@ -1,6 +1,6 @@
 {
-  "name": "N0va Desktop Convert File",
-  "version": "1.1.0",
+  "name": "n0va",
+  "version": "2.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -11,12 +11,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "ascii-table": "^0.0.9",
-    "base64-img": "^1.0.4",
-    "chalk": "^4.1.2",
-    "gradient-string": "^2.0.1",
-    "node-os-utils": "^1.3.7",
-    "node-win-dialog": "^1.0.3",
-    "path": "^0.12.7"
+    "ffi-napi": "^4.0.3"
   }
 }
