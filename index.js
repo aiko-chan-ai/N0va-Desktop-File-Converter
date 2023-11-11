@@ -3,102 +3,84 @@ process.title = `N0va Desktop File Converter v${package.version}`;
 process.env.DEBUG = 'N0va:*';
 
 const debug = require('debug');
-const ffi = require('ffi-napi');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { Readable } = require('stream');
-const util = require('util');
+const { spawnSync, exec } = require('child_process');
 
-const fsLog = debug('N0va:fs');
-const appLog = debug('N0va:app');
+let timeFsDiff, timeAppDiff;
+let log_string = `${process.title}\n\nGithub: aiko-chan-ai (Elysia)\n\n`;
+
+const fsLog_ = debug('N0va:fs');
+const appLog_ = debug('N0va:app');
+
+const fsLog = function (msg) {
+	if (!timeFsDiff) timeFsDiff = Date.now();
+	log_string += `  N0va:fs ${msg} +${Date.now() - timeFsDiff}ms\n`;
+	timeFsDiff = Date.now();
+	fsLog_(msg);
+};
+
+const appLog = function (msg) {
+	if (!timeAppDiff) timeAppDiff = Date.now();
+	log_string += `  N0va:app ${msg} +${Date.now() - timeAppDiff}ms\n`;
+	timeAppDiff = Date.now();
+	appLog_(msg);
+};
 
 if (os.platform() !== 'win32') return;
 
-const URL = `https://raw.githubusercontent.com/aiko-chan-ai/N0va-Desktop-File-Converter/main/bin/n0va-${os.arch()}.dll`;
+const URL = `https://raw.githubusercontent.com/aiko-chan-ai/N0va-Desktop-File-Converter/main/bin/n0va-${os.arch()}.exe`;
+
+class WindowsAPI {
+	constructor(pathExe, exeName) {
+		this.pathExe = pathExe;
+		this.exeName = exeName;
+	}
+	spawnCommand(...args) {
+		const str = spawnSync(this.exeName, args, {
+			cwd: this.pathExe,
+		}).stdout.toString('utf16le');
+		if (str.endsWith('\r\n')) return str.slice(0, -2);
+		if (str.endsWith('\n')) return str.slice(0, -1);
+		return str;
+	}
+}
 
 async function main() {
-	const dllFile = path.resolve(os.tmpdir(), `n0va-${os.arch()}.dll`);
-	await downloadFile(URL, dllFile);
-	const myDll = ffi.Library(dllFile, {
-		openFile: ['void', ['string', 'size_t']],
-		saveFolder: ['void', ['string', 'size_t']],
-	});
-	const user32 = ffi.Library('user32', {
-		MessageBoxW: ['int32', ['int32', 'string', 'string', 'int32']],
-	});
+	const fileName = `n0va-${os.arch()}.exe`;
+	const exeFile = path.resolve(os.tmpdir(), fileName);
+	await downloadFile(URL, exeFile);
+
+	const user32 = new WindowsAPI(os.tmpdir(), fileName);
+
 	function openFile(showDialogStartup = true) {
-		if (showDialogStartup)
-			user32.MessageBoxW(
-				0,
-				Buffer.from(
-					'Select the path of N0va Desktop\0',
-					'ucs2',
-				).toString(),
-				Buffer.from(`${process.title}\0`, 'ucs2'),
-				0x00 + 0x40,
-			);
-		const bufferSize = 10240;
-		const buffer = Buffer.alloc(bufferSize);
-		myDll.openFile(buffer, bufferSize);
-		const result = buffer.toString('ucs2').replace(/\0/g, '');
-		if (!result) {
-			user32.MessageBoxW(
-				0,
-				Buffer.from(
-					'You have canceled, the application will exit\0',
-					'ucs2',
-				).toString(),
-				Buffer.from(`${process.title}\0`, 'ucs2'),
-				0x00 + 0x30,
-			);
+		if (showDialogStartup) user32.spawnCommand('-dia_open_file');
+		const result = user32.spawnCommand('-file');
+		if (result.includes('No file selected or an error occurred.')) {
+			user32.spawnCommand('-dia_cancel');
 			return process.exit(0);
 		}
 		const pathParse = path.parse(result);
 		if (fs.readdirSync(pathParse.dir).includes('N0vaDesktopCache')) {
 			return path.resolve(pathParse.dir, 'N0vaDesktopCache');
 		} else {
-			const i = user32.MessageBoxW(
-				0,
-				Buffer.from(
-					'The path of N0va Desktop is invalid\0',
-					'ucs2',
-				).toString(),
-				Buffer.from(`${process.title}\0`, 'ucs2'),
-				0x05 + 0x10,
-			);
-			if (i == 4) {
-				return openFile(false);
-			} else {
-				process.exit(0);
-			}
+			user32.spawnCommand('-dia_invalid_path');
+			return openFile(false);
 		}
 	}
+
 	function saveFolder() {
-		user32.MessageBoxW(
-			0,
-			Buffer.from('Choose a path to save the file\0', 'ucs2').toString(),
-			Buffer.from(`${process.title}\0`, 'ucs2'),
-			0x00 + 0x40,
-		);
-		const bufferSize = 10240;
-		const buffer = Buffer.alloc(bufferSize);
-		myDll.saveFolder(buffer, bufferSize);
-		const result = buffer.toString('ucs2').replace(/\0/g, '');
+		user32.spawnCommand('-dia_open_folder');
+		const result = user32.spawnCommand('-folder');
 		if (!result) {
-			user32.MessageBoxW(
-				0,
-				Buffer.from(
-					'You have canceled, the application will exit\0',
-					'ucs2',
-				).toString(),
-				Buffer.from(`${process.title}\0`, 'ucs2'),
-				0x00 + 0x30,
-			);
+			user32.spawnCommand('-dia_cancel');
 			return process.exit(0);
 		}
 		return result;
 	}
+
 	const folderN0va = openFile();
 	const saveFolderPath = saveFolder();
 	appLog(`N0va: ${folderN0va}`);
@@ -108,12 +90,9 @@ async function main() {
 			convert(_, saveFolderPath, folderN0va),
 		),
 	);
-	user32.MessageBoxW(
-		0,
-		Buffer.from('Successfully converted files!\0', 'ucs2').toString(),
-		Buffer.from(`${process.title}\0`, 'ucs2'),
-		0x00 + 0x40,
-	);
+	fs.writeFileSync(path.resolve(saveFolderPath, `log-${Date.now()}.txt`), log_string);
+	exec(`start explorer ${saveFolderPath}`);
+	user32.spawnCommand('-dia_success');
 }
 
 function scanForNdfFiles(directory) {

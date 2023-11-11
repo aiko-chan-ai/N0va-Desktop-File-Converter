@@ -9,14 +9,5 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "ffi-napi": "^4.0.3"
-  },
-  "pkg": {
-    "assets": [
-      "./node_modules/ffi-napi/prebuilds/**/*",
-      "./node_modules/ref-napi/prebuilds/**/*"
-    ]
-  }
+  "license": "ISC"
 }
