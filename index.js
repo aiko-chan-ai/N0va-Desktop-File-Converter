@@ -171,7 +171,7 @@ function checkData(folderPath, fileName) {
 		// Video (mp4): 00 00 00 00 ...
 		// => Delete 2 byte (00 00) => Rename to mp4
 		file.on('close', () => {
-			if (data = '89504e47') {
+			if (data == '89504e47') {
 				r({
 					type: 'png',
 					skip: 0,
