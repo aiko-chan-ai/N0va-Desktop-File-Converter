@@ -24,10 +24,10 @@ void openFile() {
     ofn.lpstrTitle = L"Select N0va Desktop (N0vaDesktop.exe)";
     if (GetOpenFileNameW(&ofn) == TRUE) {
         std::wstring selectedFile(ofn.lpstrFile);
-        std::wcout << L"{ \"msg\": \"" << selectedFile << L"\", \"status\": \"ok\" }" << std::endl;
+        std::wcout << selectedFile << std::endl;
     }
     else {
-        std::wcout << L"{ \"msg\": \"No file selected or an error occurred.\", \"status\": \"fail\" " << std::endl;
+        std::wcout << L"No file selected or an error occurred." << std::endl;
     }
 }
 
@@ -38,7 +38,7 @@ void saveFolder() {
     if (pidl != nullptr) {
         TCHAR selectedPath[MAX_PATH];
         if (SHGetPathFromIDList(pidl, selectedPath)) {
-            std::wcout << L"{ \"msg\": \"" << selectedPath << L"\", \"status\": \"ok\" }" << std::endl;
+            std::wcout << selectedPath << std::endl;
         }
         IMalloc* pMalloc;
         if (SUCCEEDED(SHGetMalloc(&pMalloc))) {
@@ -47,7 +47,7 @@ void saveFolder() {
         }
     }
     else {
-        std::wcout << L"{ \"msg\": \"No folder selected or an error occurred.\", \"status\": \"fail\" " << std::endl;
+        std::wcout << L"No folder selected or an error occurred." << std::endl;
     }
 }
 
