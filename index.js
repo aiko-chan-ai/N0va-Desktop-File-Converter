@@ -90,7 +90,10 @@ async function main() {
 			convert(_, saveFolderPath, folderN0va),
 		),
 	);
-	fs.writeFileSync(path.resolve(saveFolderPath, `log-${Date.now()}.txt`), log_string);
+	fs.writeFileSync(
+		path.resolve(saveFolderPath, `log-${Date.now()}.txt`),
+		log_string,
+	);
 	exec(`start explorer ${saveFolderPath}`);
 	user32.spawnCommand('-dia_success');
 }
@@ -163,14 +166,19 @@ function checkData(folderPath, fileName) {
 		file.on('data', (d) => {
 			data += d.toString();
 		});
-		// Img PNG hex : 89 50 4E 47 ... (50 4E 47 = PNG)
+		// Img PNG hex : 89 50 4E 47 ...
 		// => imgBase64 + Convert base64 string
 		// Video (mp4): 00 00 00 00 ...
 		// => Delete 2 byte (00 00) => Rename to mp4
 		file.on('close', () => {
-			if (data.endsWith('504e47')) {
+			if (data = '89504e47') {
 				r({
 					type: 'png',
+					skip: 0,
+				});
+			} else if (data.startsWith('ffd8ff')) {
+				r({
+					type: 'jpg',
 					skip: 0,
 				});
 			} else if (data.endsWith('000000')) {
