@@ -72,7 +72,7 @@ void invalidPath() {
     std::wstring title = L"N0va Desktop File Converter";
 
     int result = MessageBoxW(NULL, message.c_str(), title.c_str(), MB_ICONERROR | MB_OK);
-    std::cout << result;
+    std::cout << (result == 4);
 }
 
 void saveFolderDialog() {
@@ -104,13 +104,13 @@ int main(int argc, char* argv[]) {
         openFile();
     }
     else if (arg == "-folder") {
-        saveFolderDialog();
+        saveFolder();
     }
     else if (arg == "-dia_open_file") {
         openFileFirst();
     }
     else if (arg == "-dia_open_folder") {
-        saveFolder();
+        saveFolderDialog();
     }
     else if (arg == "-dia_cancel") {
         cancel();
