@@ -181,7 +181,7 @@ function checkData(folderPath, fileName) {
 					type: 'jpg',
 					skip: 0,
 				});
-			} else if (data.endsWith('000000')) {
+			} else if (data.startsWith('000000')) {
 				r({
 					type: 'mp4',
 					skip: 2,
